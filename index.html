@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Normal Distribution Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <style>
+    :root {
+      --bg-0: #f3f6f4;
+      --bg-1: #e8efea;
+      --ink: #1a2420;
+      --ink-muted: #5a6b63;
+      --ink-faint: #8a9a92;
+      --accent: #0d7a5f;
+      --accent-soft: rgba(13, 122, 95, 0.18);
+      --accent-fill: rgba(13, 122, 95, 0.28);
+      --curve: #0a5c48;
+      --handle: #c45c26;
+      --handle-soft: rgba(196, 92, 38, 0.15);
+      --surface: rgba(255, 255, 255, 0.72);
+      --border: rgba(26, 36, 32, 0.1);
+      --shadow: 0 12px 40px rgba(26, 36, 32, 0.08);
+      --radius: 14px;
+      --font-display: "Fraunces", Georgia, serif;
+      --font-body: "DM Sans", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--ink);
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, #d4e8de 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 0%, #e8dfd4 0%, transparent 50%),
+        linear-gradient(165deg, var(--bg-0) 0%, var(--bg-1) 100%);
+      padding: 1.25rem clamp(1rem, 3vw, 2rem) 2.5rem;
+      line-height: 1.45;
+    }
+
+    .page {
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 1.5rem;
+      animation: rise 0.6s ease-out both;
+    }
+
+    header h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 4vw, 2.35rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 0.35rem;
+    }
+
+    header p {
+      color: var(--ink-muted);
+      font-size: 0.95rem;
+      max-width: 36rem;
+    }
+
+    .probability {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.15rem;
+      margin-bottom: 1.25rem;
+      padding: 1rem 1.25rem;
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      animation: rise 0.6s 0.08s ease-out both;
+    }
+
+    .probability-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+
+    .probability-value {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+      transition: color 0.2s ease;
+    }
+
+    .probability-expr {
+      font-size: 0.9rem;
+      color: var(--ink-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      animation: rise 0.6s 0.12s ease-out both;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .field label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--ink-muted);
+    }
+
+    .field label span {
+      font-family: var(--font-display);
+      font-style: italic;
+      color: var(--ink);
+    }
+
+    .field input[type="number"] {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .field input[type="number"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .tails {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .tails button {
+      flex: 1 1 auto;
+      min-width: max(140px, 28%);
+      padding: 0.6rem 0.9rem;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ink-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+    }
+
+    .tails button:hover {
+      color: var(--ink);
+      border-color: rgba(13, 122, 95, 0.35);
+      background: #fff;
+    }
+
+    .tails button:active {
+      transform: scale(0.98);
+    }
+
+    .tails button.active {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: rise 0.6s 0.18s ease-out both;
+    }
+
+    #chart {
+      display: block;
+      width: 100%;
+      height: auto;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .axis path,
+    .axis line {
+      stroke: rgba(26, 36, 32, 0.2);
+      stroke-width: 1;
+    }
+
+    .axis text {
+      font-family: var(--font-body);
+      font-size: 11px;
+      fill: var(--ink-faint);
+    }
+
+    .curve {
+      fill: none;
+      stroke: var(--curve);
+      stroke-width: 2.5;
+      stroke-linejoin: round;
+    }
+
+    .shade {
+      fill: var(--accent-fill);
+      stroke: none;
+      transition: fill 0.15s ease;
+    }
+
+    .mean-line {
+      stroke: var(--ink-faint);
+      stroke-width: 1;
+      stroke-dasharray: 4 4;
+      opacity: 0.7;
+    }
+
+    .handle-line {
+      stroke: var(--handle);
+      stroke-width: 2;
+      pointer-events: none;
+    }
+
+    .handle-hit {
+      cursor: ew-resize;
+      fill: transparent;
+    }
+
+    .handle-knob {
+      fill: var(--handle);
+      stroke: #fff;
+      stroke-width: 2.5;
+      filter: drop-shadow(0 2px 4px rgba(196, 92, 38, 0.35));
+      pointer-events: none;
+      transition: r 0.12s ease;
+    }
+
+    .handle-group:hover .handle-knob,
+    .handle-group.dragging .handle-knob {
+      r: 9;
+    }
+
+    .handle-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 600;
+      fill: var(--handle);
+      text-anchor: middle;
+      pointer-events: none;
+    }
+
+    .hint {
+      margin-top: 0.85rem;
+      font-size: 0.8rem;
+      color: var(--ink-faint);
+      text-align: center;
+      animation: rise 0.6s 0.22s ease-out both;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .tails button {
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Normal Distribution Explorer</h1>
+      <p>Drag the orange handles or adjust μ and σ to explore probabilities under the curve.</p>
+    </header>
+
+    <div class="probability" aria-live="polite">
+      <span class="probability-label">Shaded probability</span>
+      <span class="probability-value" id="probValue">0.6827</span>
+      <span class="probability-expr" id="probExpr">P(−1.00 ≤ X ≤ 1.00)</span>
+    </div>
+
+    <div class="controls">
+      <div class="field">
+        <label for="meanInput">Mean <span>μ</span></label>
+        <input id="meanInput" type="number" value="0" step="0.1" />
+      </div>
+      <div class="field">
+        <label for="sdInput">Standard Deviation <span>σ</span></label>
+        <input id="sdInput" type="number" value="1" step="0.1" min="0.01" />
+      </div>
+      <div class="tails" role="group" aria-label="Tail selection">
+        <button type="button" id="btnLeft" data-mode="left">Left Tail (to −∞)</button>
+        <button type="button" id="btnRight" data-mode="right">Right Tail (to ∞)</button>
+        <button type="button" id="btnBetween" data-mode="between" class="active">Between Bounds</button>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <svg id="chart" role="img" aria-label="Interactive normal distribution curve"></svg>
+    </div>
+    <p class="hint">Drag the vertical handles along the x-axis · values update live</p>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      // --- Math: normal PDF & CDF (Abramowitz–Stegun erf approximation) ---
+      function pdf(x, mu, sigma) {
+        const z = (x - mu) / sigma;
+        return Math.exp(-0.5 * z * z) / (sigma * Math.sqrt(2 * Math.PI));
+      }
+
+      function erf(x) {
+        const sign = x < 0 ? -1 : 1;
+        const a = Math.abs(x);
+        const t = 1 / (1 + 0.3275911 * a);
+        const y =
+          1 -
+          (((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t -
+            0.284496736) *
+            t +
+            0.254829592) *
+            t *
+            Math.exp(-a * a));
+        return sign * y;
+      }
+
+      function cdf(x, mu, sigma) {
+        return 0.5 * (1 + erf((x - mu) / (sigma * Math.SQRT2)));
+      }
+
+      function formatNum(n, digits) {
+        if (!Number.isFinite(n)) return n < 0 ? "−∞" : "∞";
+        const s = n.toFixed(digits);
+        return s.replace(/^-/, "−");
+      }
+
+      // --- State ---
+      const state = {
+        mu: 0,
+        sigma: 1,
+        lower: -1,
+        upper: 1,
+        mode: "between", // left | right | between
+        dragging: null,
+      };
+
+      const X_PAD = 4; // display window in σ units around mean for axis extent
+      const SVG_H = 380;
+      const MARGIN = { top: 28, right: 20, bottom: 48, left: 44 };
+
+      const svg = d3.select("#chart");
+      const g = svg.append("g");
+      const shadePath = g.append("path").attr("class", "shade");
+      const curvePath = g.append("path").attr("class", "curve");
+      const meanLine = g.append("line").attr("class", "mean-line");
+      const xAxisG = g.append("g").attr("class", "axis x-axis");
+      const yAxisG = g.append("g").attr("class", "axis y-axis");
+
+      const lowerHandle = createHandle("lower");
+      const upperHandle = createHandle("upper");
+
+      // Live scales updated each render; drag handlers read from here
+      const scales = { x: null, y: null, xmin: -4, xmax: 4, innerH: 300 };
+
+      function createHandle(which) {
+        const group = g.append("g").attr("class", "handle-group").attr("data-handle", which);
+        group.append("line").attr("class", "handle-line");
+        group.append("rect").attr("class", "handle-hit").attr("width", 28).attr("x", -14);
+        group.append("circle").attr("class", "handle-knob").attr("r", 7);
+        group.append("text").attr("class", "handle-label").attr("dy", "1.35em");
+        return group;
+      }
+
+      function xDomain() {
+        const span = Math.max(state.sigma * X_PAD, 0.5);
+        return [state.mu - span, state.mu + span];
+      }
+
+      function clampToDomain(v) {
+        const [a, b] = xDomain();
+        return Math.max(a, Math.min(b, v));
+      }
+
+      function syncHandlesToMode() {
+        const [xmin, xmax] = xDomain();
+        if (state.mode === "left") {
+          state.lower = xmin;
+          state.upper = clampToDomain(state.upper === xmin ? state.mu : state.upper);
+        } else if (state.mode === "right") {
+          state.upper = xmax;
+          state.lower = clampToDomain(state.lower === xmax ? state.mu : state.lower);
+        } else {
+          if (state.lower <= xmin + 1e-9) state.lower = state.mu - state.sigma;
+          if (state.upper >= xmax - 1e-9) state.upper = state.mu + state.sigma;
+          if (state.lower >= state.upper) {
+            state.lower = state.mu - state.sigma;
+            state.upper = state.mu + state.sigma;
+          }
+        }
+      }
+
+      function computeProbability() {
+        const { mu, sigma, lower, upper, mode } = state;
+        if (mode === "left") return cdf(upper, mu, sigma);
+        if (mode === "right") return 1 - cdf(lower, mu, sigma);
+        return Math.max(0, cdf(upper, mu, sigma) - cdf(lower, mu, sigma));
+      }
+
+      function updateProbabilityUI() {
+        const p = computeProbability();
+        const el = document.getElementById("probValue");
+        const expr = document.getElementById("probExpr");
+        el.textContent = p.toFixed(4);
+
+        const L = formatNum(state.lower, 2);
+        const U = formatNum(state.upper, 2);
+        if (state.mode === "left") {
+          expr.textContent = `P(X ≤ ${U})`;
+        } else if (state.mode === "right") {
+          expr.textContent = `P(X ≥ ${L})`;
+        } else {
+          expr.textContent = `P(${L} ≤ X ≤ ${U})`;
+        }
+      }
+
+      function chartSize() {
+        const wrap = document.querySelector(".chart-wrap");
+        const width = Math.max(wrap.clientWidth, 280);
+        const height = Math.min(SVG_H, Math.max(280, width * 0.55));
+        return { width, height };
+      }
+
+      function render() {
+        const { width, height } = chartSize();
+        const innerW = width - MARGIN.left - MARGIN.right;
+        const innerH = height - MARGIN.top - MARGIN.bottom;
+
+        svg.attr("viewBox", `0 0 ${width} ${height}`).attr("width", width).attr("height", height);
+        g.attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
+
+        const [xmin, xmax] = xDomain();
+        const x = d3.scaleLinear().domain([xmin, xmax]).range([0, innerW]);
+        const yMax = pdf(state.mu, state.mu, state.sigma) * 1.12;
+        const y = d3.scaleLinear().domain([0, yMax]).range([innerH, 0]);
+
+        scales.x = x;
+        scales.y = y;
+        scales.xmin = xmin;
+        scales.xmax = xmax;
+        scales.innerH = innerH;
+
+        // Curve samples
+        const n = 300;
+        const pts = d3.range(n + 1).map((i) => {
+          const xv = xmin + ((xmax - xmin) * i) / n;
+          return [xv, pdf(xv, state.mu, state.sigma)];
+        });
+
+        const line = d3
+          .line()
+          .x((d) => x(d[0]))
+          .y((d) => y(d[1]))
+          .curve(d3.curveBasis);
+
+        curvePath.datum(pts).attr("d", line);
+
+        // Shade between visible bounds
+        let shadeLo = state.lower;
+        let shadeHi = state.upper;
+        if (state.mode === "left") {
+          shadeLo = xmin;
+          shadeHi = state.upper;
+        } else if (state.mode === "right") {
+          shadeLo = state.lower;
+          shadeHi = xmax;
+        }
+
+        const shadePts = pts.filter((d) => d[0] >= shadeLo && d[0] <= shadeHi);
+        if (shadePts.length >= 2) {
+          const area = d3
+            .area()
+            .x((d) => x(d[0]))
+            .y0(innerH)
+            .y1((d) => y(d[1]))
+            .curve(d3.curveBasis);
+          shadePath.datum(shadePts).attr("d", area).attr("opacity", 1);
+        } else {
+          shadePath.attr("d", null);
+        }
+
+        // Mean marker
+        meanLine
+          .attr("x1", x(state.mu))
+          .attr("x2", x(state.mu))
+          .attr("y1", 0)
+          .attr("y2", innerH);
+
+        // Axes
+        xAxisG
+          .attr("transform", `translate(0,${innerH})`)
+          .call(d3.axisBottom(x).ticks(9).tickSizeOuter(0));
+        yAxisG.call(d3.axisLeft(y).ticks(5).tickSizeOuter(0).tickFormat(d3.format(".2f")));
+
+        // Handles
+        positionHandle(lowerHandle, state.lower, state.mode === "left");
+        positionHandle(upperHandle, state.upper, state.mode === "right");
+
+        updateProbabilityUI();
+      }
+
+      function positionHandle(group, value, locked) {
+        const { x, y, innerH } = scales;
+        const px = x(value);
+        const py = y(pdf(value, state.mu, state.sigma));
+        group.attr("transform", `translate(${px},0)`);
+        group.select(".handle-line").attr("y1", py).attr("y2", innerH);
+        group.select(".handle-hit").attr("y", 0).attr("height", innerH);
+        group.select(".handle-knob").attr("cy", innerH);
+        group.select(".handle-label").attr("y", innerH).text(formatNum(value, 2));
+        group.style("opacity", locked ? 0.35 : 1);
+        group.style("pointer-events", locked ? "none" : "all");
+      }
+
+      function bindDrag(group, which) {
+        const drag = d3
+          .drag()
+          .on("start", function (event) {
+            event.sourceEvent.stopPropagation();
+            state.dragging = which;
+            d3.select(this).classed("dragging", true);
+          })
+          .on("drag", function (event) {
+            const { x, xmin, xmax } = scales;
+            let v = x.invert(event.x);
+            v = Math.max(xmin, Math.min(xmax, v));
+
+            if (which === "lower") {
+              if (state.mode === "between") v = Math.min(v, state.upper - 0.01);
+              if (state.mode === "right") v = Math.min(v, xmax - 0.01);
+              state.lower = v;
+            } else {
+              if (state.mode === "between") v = Math.max(v, state.lower + 0.01);
+              if (state.mode === "left") v = Math.max(v, xmin + 0.01);
+              state.upper = v;
+            }
+            render();
+          })
+          .on("end", function () {
+            state.dragging = null;
+            d3.select(this).classed("dragging", false);
+          });
+
+        group.call(drag);
+      }
+
+      bindDrag(lowerHandle, "lower");
+      bindDrag(upperHandle, "upper");
+
+      // --- Controls ---
+      const meanInput = document.getElementById("meanInput");
+      const sdInput = document.getElementById("sdInput");
+
+      meanInput.addEventListener("input", () => {
+        const v = parseFloat(meanInput.value);
+        if (!Number.isFinite(v)) return;
+        const dx = v - state.mu;
+        state.mu = v;
+        state.lower += dx;
+        state.upper += dx;
+        syncHandlesToMode();
+        render();
+      });
+
+      sdInput.addEventListener("input", () => {
+        let v = parseFloat(sdInput.value);
+        if (!Number.isFinite(v) || v <= 0) return;
+        v = Math.max(0.01, v);
+        const oldSigma = state.sigma;
+        // Keep z-scores of bounds roughly stable when σ changes
+        const zl = (state.lower - state.mu) / oldSigma;
+        const zu = (state.upper - state.mu) / oldSigma;
+        state.sigma = v;
+        state.lower = state.mu + zl * v;
+        state.upper = state.mu + zu * v;
+        syncHandlesToMode();
+        render();
+      });
+
+      document.querySelectorAll(".tails button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".tails button").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          state.mode = btn.dataset.mode;
+          syncHandlesToMode();
+          render();
+        });
+      });
+
+      // Responsive
+      const ro = new ResizeObserver(() => render());
+      ro.observe(document.querySelector(".chart-wrap"));
+
+      // Initial
+      syncHandlesToMode();
+      render();
+    })();
+  </script>
+</body>
+</html>
