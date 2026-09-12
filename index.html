@@ -1,9 +1,12 @@
+<!-- TODO 
+ - AUTOMATICALLY TOGGLE TO LEFT/RIGHT TAIL IF USER SLIDES ALL THE WAY TO THE LEFT/RIGHT
+ -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Normal Distribution Explorer</title>
+  <title>Normal Distribution Visualiser </title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet" />
@@ -48,8 +51,22 @@
     }
 
     .page {
-      max-width: 920px;
+      max-width: 1100px;
       margin: 0 auto;
+    }
+
+    .viz-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+      gap: 1rem;
+      align-items: start;
+      animation: rise 0.6s 0.18s ease-out both;
+    }
+
+    @media (max-width: 820px) {
+      .viz-row {
+        grid-template-columns: 1fr;
+      }
     }
 
     header {
@@ -137,7 +154,9 @@
       color: var(--ink);
     }
 
-    .field input[type="number"] {
+    .field input[type="number"],
+    .field input[type="text"],
+    .field textarea {
       width: 100%;
       padding: 0.65rem 0.85rem;
       font-family: var(--font-body);
@@ -151,9 +170,226 @@
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .field input[type="number"]:focus {
+    .field textarea {
+      font-variant-numeric: normal;
+      resize: vertical;
+      min-height: 4.5rem;
+      line-height: 1.4;
+    }
+
+    .field input[type="number"]:focus,
+    .field input[type="text"]:focus,
+    .field textarea:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .field .hint-inline {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--ink-faint);
+    }
+
+    .situation {
+      margin-bottom: 1.25rem;
+      padding: 1.1rem 1.25rem 1.2rem;
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      animation: rise 0.6s 0.05s ease-out both;
+    }
+
+    .situation-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.35rem 1rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .situation-header h2 {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .situation-step {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+
+    .situation-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem 1rem;
+    }
+
+    .situation-grid .field-span {
+      grid-column: 1 / -1;
+    }
+
+    .qtype-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-bottom: 0.95rem;
+    }
+
+    .qtype-tabs button {
+      flex: 1 1 auto;
+      min-width: 140px;
+      padding: 0.55rem 0.8rem;
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--ink-muted);
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .qtype-tabs button:hover {
+      color: var(--ink);
+      border-color: rgba(13, 122, 95, 0.35);
+    }
+
+    .qtype-tabs button.active {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .qtype-help {
+      font-size: 0.82rem;
+      color: var(--ink-muted);
+      margin: -0.35rem 0 0.85rem;
+      line-height: 1.4;
+    }
+
+    .panel-block[hidden] {
+      display: none !important;
+    }
+
+    .cmp-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .cmp-row button {
+      flex: 1 1 auto;
+      padding: 0.5rem 0.65rem;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--ink-muted);
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .cmp-row button.active {
+      color: var(--accent);
+      border-color: rgba(13, 122, 95, 0.45);
+      background: var(--accent-soft);
+    }
+
+    .result-chip {
+      margin-top: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: 10px;
+      background: rgba(42, 74, 122, 0.08);
+      color: #2a4a7a;
+      font-size: 0.9rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result-chip strong {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      padding: 0.65rem 1.1rem;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.12s ease;
+    }
+
+    .btn-primary:hover {
+      background: #0a5c48;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-ghost {
+      padding: 0.65rem 0.9rem;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ink-faint);
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      cursor: not-allowed;
+    }
+
+    .model-line {
+      margin-top: 0.85rem;
+      padding: 0.7rem 0.85rem;
+      font-size: 0.92rem;
+      background: rgba(13, 122, 95, 0.08);
+      border-radius: 10px;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .model-line code {
+      font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .model-line .muted {
+      color: var(--ink-muted);
+      font-size: 0.82rem;
+    }
+
+    .interest-marker {
+      fill: none;
+      stroke: #2a4a7a;
+      stroke-width: 1.75;
+      stroke-dasharray: 5 4;
+      pointer-events: none;
+    }
+
+    .interest-label {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 600;
+      fill: #2a4a7a;
+      text-anchor: middle;
+      pointer-events: none;
     }
 
     .tails {
@@ -203,7 +439,123 @@
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow: hidden;
-      animation: rise 0.6s 0.18s ease-out both;
+    }
+
+    .cas-panel {
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.1rem 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-height: 0;
+    }
+
+    .cas-panel h2 {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .cas-panel .cas-sub {
+      font-size: 0.78rem;
+      color: var(--ink-faint);
+      margin-top: -0.35rem;
+    }
+
+    .cas-tabs {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .cas-tabs button {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--ink-muted);
+      background: rgba(255, 255, 255, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .cas-tabs button:hover {
+      color: var(--ink);
+      border-color: rgba(13, 122, 95, 0.35);
+    }
+
+    .cas-tabs button.active {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .cas-meta {
+      font-size: 0.75rem;
+      color: var(--ink-muted);
+      line-height: 1.4;
+    }
+
+    .cas-meta strong {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .cas-command-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .cas-command-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+
+    .cas-command {
+      font-family: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      word-break: break-all;
+      padding: 0.7rem 0.8rem;
+      background: #1a2420;
+      color: #d4e8de;
+      border-radius: 10px;
+      min-height: 2.8rem;
+    }
+
+    .cas-copy {
+      align-self: stretch;
+      padding: 0.5rem 0.75rem;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .cas-copy:hover {
+      background: rgba(13, 122, 95, 0.28);
+    }
+
+    .cas-copy.copied {
+      color: #fff;
+      background: var(--accent);
     }
 
     #chart {
@@ -300,7 +652,8 @@
     }
 
     @media (max-width: 560px) {
-      .controls {
+      .controls,
+      .situation-grid {
         grid-template-columns: 1fr;
       }
 
@@ -313,34 +666,151 @@
 <body>
   <div class="page">
     <header>
-      <h1>Normal Distribution Explorer</h1>
-      <p>Drag the orange handles or adjust μ and σ to explore probabilities under the curve.</p>
+      <h1>Normal Distribution Visualiser</h1>
+      <p>MVP - testing</p>
     </header>
+
+    <section class="situation" aria-labelledby="situationTitle">
+      <div class="situation-header">
+        <h2 id="situationTitle">Map situation</h2>
+        <span class="situation-step">Step 1 · before standardising</span>
+      </div>
+
+      <div class="qtype-tabs" role="tablist" aria-label="Question type">
+        <button type="button" class="active" data-qtype="prob" aria-selected="true">Find a probability</button>
+        <button type="button" data-qtype="cutoff" aria-selected="false">Find a cut-off value</button>
+      </div>
+      <p class="qtype-help" id="qtypeHelp">
+        The question gives μ, σ, and a number on the x-axis. You shade and find the area (probability).
+      </p>
+
+      <div class="situation-grid">
+        <div class="field field-span">
+          <label for="varContext">What does <span>X</span> measure?
+            <span class="hint-inline"> · optional, helps students name the axis</span>
+          </label>
+          <input id="varContext" type="text" placeholder="e.g. height of Year 12 students (cm)" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="sitMean">Mean <span>μ</span>
+            <span class="hint-inline"> · centre of the curve</span>
+          </label>
+          <input id="sitMean" type="number" value="170" step="any" />
+        </div>
+        <div class="field">
+          <label for="sitSd">Standard deviation <span>σ</span>
+            <span class="hint-inline"> · spread; if given variance, enter √(variance)</span>
+          </label>
+          <input id="sitSd" type="number" value="8" step="any" min="0.01" />
+        </div>
+      </div>
+
+      <div class="panel-block" id="panelProb">
+        <div class="situation-grid" style="margin-top: 0.75rem">
+          <div class="field field-span">
+            <label>What is the question asking?</label>
+            <div class="cmp-row" role="group" aria-label="Comparison">
+              <button type="button" data-cmp="left">P(X ≤ k) · at most / below</button>
+              <button type="button" data-cmp="right" class="active">P(X ≥ k) · at least / above</button>
+              <button type="button" data-cmp="between">P(a ≤ X ≤ b) · between</button>
+            </div>
+          </div>
+          <div class="field" id="fieldK">
+            <label for="sitK">Cut-off on the x-axis <span>k</span>
+              <span class="hint-inline"> · the number next to “taller than”, “less than”, etc.</span>
+            </label>
+            <input id="sitK" type="number" step="any" value="180" placeholder="e.g. 180" />
+          </div>
+          <div class="field" id="fieldA" hidden>
+            <label for="sitLow">Lower cut-off <span>a</span></label>
+            <input id="sitLow" type="number" step="any" placeholder="e.g. 160" />
+          </div>
+          <div class="field" id="fieldB" hidden>
+            <label for="sitHigh">Upper cut-off <span>b</span></label>
+            <input id="sitHigh" type="number" step="any" placeholder="e.g. 180" />
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-block" id="panelCutoff" hidden>
+        <div class="situation-grid" style="margin-top: 0.75rem">
+          <div class="field field-span">
+            <label>How is the probability phrased?</label>
+            <div class="cmp-row" role="group" aria-label="Inverse direction">
+              <button type="button" data-inv="left">Area to the left of the cut-off</button>
+              <button type="button" data-inv="right" class="active">Area to the right of the cut-off</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="sitProb">Probability given
+              <span class="hint-inline"> · use 0.90 or 90</span>
+            </label>
+            <input id="sitProb" type="number" step="any" value="0.9" min="0" max="100" />
+          </div>
+          <div class="field field-span">
+            <p class="hint-inline" id="invHint">
+              Example: “90% of students are taller than k” → area to the right = 0.90 → find k.
+            </p>
+          </div>
+        </div>
+        <div class="result-chip" id="cutoffResult" hidden>
+          Cut-off value <strong id="cutoffValue">—</strong>
+          <span id="cutoffExplain"></span>
+        </div>
+      </div>
+
+      <div class="situation-actions">
+        <button type="button" class="btn-primary" id="fitCurveBtn">Show on curve</button>
+        <button type="button" class="btn-ghost" disabled title="Coming next">Step 2 · Standardise → Z</button>
+      </div>
+      <div class="model-line" id="modelLine" aria-live="polite">
+        <code>X ∼ N(170, 8²)</code>
+        <span class="muted"> · fit the curve to match this model</span>
+      </div>
+    </section>
 
     <div class="probability" aria-live="polite">
       <span class="probability-label">Shaded probability</span>
-      <span class="probability-value" id="probValue">0.6827</span>
-      <span class="probability-expr" id="probExpr">P(−1.00 ≤ X ≤ 1.00)</span>
+      <span class="probability-value" id="probValue">—</span>
+      <span class="probability-expr" id="probExpr">P(X ≥ 180)</span>
     </div>
 
     <div class="controls">
       <div class="field">
         <label for="meanInput">Mean <span>μ</span></label>
-        <input id="meanInput" type="number" value="0" step="0.1" />
+        <input id="meanInput" type="number" value="170" step="0.1" />
       </div>
       <div class="field">
         <label for="sdInput">Standard Deviation <span>σ</span></label>
-        <input id="sdInput" type="number" value="1" step="0.1" min="0.01" />
+        <input id="sdInput" type="number" value="8" step="0.1" min="0.01" />
       </div>
       <div class="tails" role="group" aria-label="Tail selection">
         <button type="button" id="btnLeft" data-mode="left">Left Tail (to −∞)</button>
-        <button type="button" id="btnRight" data-mode="right">Right Tail (to ∞)</button>
-        <button type="button" id="btnBetween" data-mode="between" class="active">Between Bounds</button>
+        <button type="button" id="btnRight" data-mode="right" class="active">Right Tail (to ∞)</button>
+        <button type="button" id="btnBetween" data-mode="between">Between Bounds</button>
       </div>
     </div>
 
-    <div class="chart-wrap">
-      <svg id="chart" role="img" aria-label="Interactive normal distribution curve"></svg>
+    <div class="viz-row">
+      <div class="chart-wrap">
+        <svg id="chart" role="img" aria-label="Interactive normal distribution curve"></svg>
+      </div>
+
+      <aside class="cas-panel" aria-label="CAS probability functions">
+        <h2>CAS functions</h2>
+        <p class="cas-sub">VCE Methods · approved calculators</p>
+        <div class="cas-tabs" role="tablist" aria-label="CAS calculator">
+          <button type="button" role="tab" data-cas="ti" class="active" aria-selected="true">TI-Nspire CAS</button>
+          <button type="button" role="tab" data-cas="casio" aria-selected="false">Casio ClassPad</button>
+          <button type="button" role="tab" data-cas="hp" aria-selected="false">HP Prime</button>
+        </div>
+        <p class="cas-meta" id="casMeta"></p>
+        <div class="cas-command-wrap">
+          <span class="cas-command-label">Enter on your CAS</span>
+          <code class="cas-command" id="casCommand" aria-live="polite"></code>
+          <button type="button" class="cas-copy" id="casCopy">Copy command</button>
+        </div>
+      </aside>
     </div>
     <p class="hint">Drag the vertical handles along the x-axis · values update live</p>
   </div>
@@ -374,6 +844,19 @@
         return 0.5 * (1 + erf((x - mu) / (sigma * Math.SQRT2)));
       }
 
+      // Inverse CDF via binary search — no API needed
+      function invCdf(p, mu, sigma) {
+        const target = Math.min(1 - 1e-12, Math.max(1e-12, p));
+        let lo = mu - 10 * sigma;
+        let hi = mu + 10 * sigma;
+        for (let i = 0; i < 80; i++) {
+          const mid = (lo + hi) / 2;
+          if (cdf(mid, mu, sigma) < target) lo = mid;
+          else hi = mid;
+        }
+        return (lo + hi) / 2;
+      }
+
       function formatNum(n, digits) {
         if (!Number.isFinite(n)) return n < 0 ? "−∞" : "∞";
         const s = n.toFixed(digits);
@@ -382,13 +865,96 @@
 
       // --- State ---
       const state = {
-        mu: 0,
-        sigma: 1,
-        lower: -1,
-        upper: 1,
-        mode: "between", // left | right | between
+        mu: 170,
+        sigma: 8,
+        lower: 180,
+        upper: 170 + 4 * 8,
+        mode: "right", // left | right | between
         dragging: null,
+        cas: "ti", // ti | casio | hp
+        context: "",
+        qtype: "prob", // prob | cutoff
+        cmp: "right", // for probability questions
+        invDir: "right", // for inverse questions
+        interestA: 180,
+        interestB: null,
       };
+
+      // VCE-approved CAS families: TI-Nspire CAS, Casio ClassPad, HP Prime
+      const CAS_INFO = {
+        ti: {
+          name: "TI-Nspire CAS",
+          menu: "Menu → Probability → Distributions → Normal Cdf",
+          order: "normCdf(lower, upper, μ, σ)",
+        },
+        casio: {
+          name: "Casio ClassPad",
+          menu: "Interactive → Distribution → Continuous → normCDf",
+          order: "NormCD(lower, upper, σ, μ) — note σ before μ",
+        },
+        hp: {
+          name: "HP Prime",
+          menu: "Toolbox → Prob → NORMALD_CDF",
+          order: "NORMALD_CDF(μ, σ, lower, upper)",
+        },
+      };
+
+      function fmtCas(n, digits) {
+        if (!Number.isFinite(n)) return null;
+        const rounded = Number(n.toFixed(digits));
+        return String(rounded);
+      }
+
+      function boundsForCas() {
+        const digits = 4;
+        let lo;
+        let hi;
+        if (state.mode === "left") {
+          lo = -Infinity;
+          hi = state.upper;
+        } else if (state.mode === "right") {
+          lo = state.lower;
+          hi = Infinity;
+        } else {
+          lo = state.lower;
+          hi = state.upper;
+        }
+        return {
+          lo,
+          hi,
+          loStr: Number.isFinite(lo) ? fmtCas(lo, digits) : null,
+          hiStr: Number.isFinite(hi) ? fmtCas(hi, digits) : null,
+          muStr: fmtCas(state.mu, digits),
+          sigmaStr: fmtCas(state.sigma, digits),
+        };
+      }
+
+      function buildCasCommand() {
+        const { loStr, hiStr, muStr, sigmaStr } = boundsForCas();
+        const tiLo = loStr ?? "−∞";
+        const tiHi = hiStr ?? "∞";
+        const casioLo = loStr ?? "−1E99";
+        const casioHi = hiStr ?? "1E99";
+        const hpLo = loStr ?? "−∞";
+        const hpHi = hiStr ?? "∞";
+
+        if (state.cas === "ti") {
+          return `normCdf(${tiLo}, ${tiHi}, ${muStr}, ${sigmaStr})`;
+        }
+        if (state.cas === "casio") {
+          return `NormCD(${casioLo}, ${casioHi}, ${sigmaStr}, ${muStr})`;
+        }
+        return `NORMALD_CDF(${muStr}, ${sigmaStr}, ${hpLo}, ${hpHi})`;
+      }
+
+      function updateCasUI() {
+        const info = CAS_INFO[state.cas];
+        const meta = document.getElementById("casMeta");
+        const cmd = document.getElementById("casCommand");
+        meta.innerHTML = `<strong>${info.menu}</strong><br>Args: ${info.order}`;
+        cmd.textContent = buildCasCommand();
+      }
+
 
       const X_PAD = 4; // display window in σ units around mean for axis extent
       const SVG_H = 380;
@@ -399,6 +965,7 @@
       const shadePath = g.append("path").attr("class", "shade");
       const curvePath = g.append("path").attr("class", "curve");
       const meanLine = g.append("line").attr("class", "mean-line");
+      const interestLayer = g.append("g").attr("class", "interest-layer");
       const xAxisG = g.append("g").attr("class", "axis x-axis");
       const yAxisG = g.append("g").attr("class", "axis y-axis");
 
@@ -467,6 +1034,201 @@
         } else {
           expr.textContent = `P(${L} ≤ X ≤ ${U})`;
         }
+        updateCasUI();
+      }
+
+      function updateModelLine() {
+        const mu = formatNum(state.mu, 2);
+        const sigma = formatNum(state.sigma, 2);
+        const ctx = state.context.trim();
+        const parts = [];
+        parts.push(`<code>X ∼ N(${mu}, ${sigma}²)</code>`);
+        if (ctx) {
+          parts.push(`<span class="muted"> · ${escapeHtml(ctx)}</span>`);
+        } else {
+          parts.push(`<span class="muted"> · model fitted from the question</span>`);
+        }
+        const marks = [];
+        if (state.interestA != null) marks.push(`k = ${formatNum(state.interestA, 2)}`);
+        if (state.interestB != null) marks.push(`b = ${formatNum(state.interestB, 2)}`);
+        if (marks.length) {
+          parts.push(`<span class="muted"> · ${marks.join(", ")}</span>`);
+        }
+        document.getElementById("modelLine").innerHTML = parts.join("");
+      }
+
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function setTailMode(mode) {
+        state.mode = mode;
+        document.querySelectorAll(".tails button").forEach((b) => {
+          b.classList.toggle("active", b.dataset.mode === mode);
+        });
+      }
+
+      function syncControlInputs() {
+        meanInput.value = String(state.mu);
+        sdInput.value = String(state.sigma);
+        sitMean.value = String(state.mu);
+        sitSd.value = String(state.sigma);
+      }
+
+      function parseOptionalNumber(el) {
+        const raw = el.value.trim();
+        if (raw === "") return null;
+        const v = parseFloat(raw);
+        return Number.isFinite(v) ? v : null;
+      }
+
+      /** Accept 0.9 or 90 as 90% */
+      function parseProbability(raw) {
+        const v = parseFloat(raw);
+        if (!Number.isFinite(v)) return null;
+        if (v > 1 && v <= 100) return v / 100;
+        if (v >= 0 && v <= 1) return v;
+        return null;
+      }
+
+      function updateQtypeUI() {
+        const isProb = state.qtype === "prob";
+        panelProb.hidden = !isProb;
+        panelCutoff.hidden = isProb;
+        qtypeHelp.textContent = isProb
+          ? "The question gives μ, σ, and a number on the x-axis. You shade and find the area (probability)."
+          : "The question gives μ, σ, and a probability (e.g. 90% taller than …). You find the cut-off on the axis.";
+
+        document.querySelectorAll(".qtype-tabs button").forEach((b) => {
+          const on = b.dataset.qtype === state.qtype;
+          b.classList.toggle("active", on);
+          b.setAttribute("aria-selected", on ? "true" : "false");
+        });
+
+        if (isProb) {
+          const between = state.cmp === "between";
+          fieldK.hidden = between;
+          fieldA.hidden = !between;
+          fieldB.hidden = !between;
+          document.querySelectorAll("#panelProb [data-cmp]").forEach((b) => {
+            b.classList.toggle("active", b.dataset.cmp === state.cmp);
+          });
+        } else {
+          document.querySelectorAll("#panelCutoff [data-inv]").forEach((b) => {
+            b.classList.toggle("active", b.dataset.inv === state.invDir);
+          });
+          invHint.textContent =
+            state.invDir === "right"
+              ? "Example: “90% of students are taller than k” → area to the right = 0.90 → find k."
+              : "Example: “the lowest 10% score below k” → area to the left = 0.10 → find k.";
+        }
+      }
+
+      function applySituationToCurve() {
+        const mu = parseFloat(sitMean.value);
+        let sigma = parseFloat(sitSd.value);
+        if (!Number.isFinite(mu) || !Number.isFinite(sigma) || sigma <= 0) return;
+        sigma = Math.max(0.01, sigma);
+
+        state.context = varContext.value;
+        state.mu = mu;
+        state.sigma = sigma;
+
+        cutoffResult.hidden = true;
+
+        if (state.qtype === "prob") {
+          if (state.cmp === "between") {
+            const a = parseOptionalNumber(sitLow);
+            const b = parseOptionalNumber(sitHigh);
+            if (a == null || b == null) return;
+            setTailMode("between");
+            state.lower = Math.min(a, b);
+            state.upper = Math.max(a, b);
+            state.interestA = state.lower;
+            state.interestB = state.upper;
+          } else if (state.cmp === "left") {
+            const k = parseOptionalNumber(sitK);
+            if (k == null) return;
+            setTailMode("left");
+            state.upper = k;
+            state.lower = mu - 4 * sigma;
+            state.interestA = k;
+            state.interestB = null;
+          } else {
+            const k = parseOptionalNumber(sitK);
+            if (k == null) return;
+            setTailMode("right");
+            state.lower = k;
+            state.upper = mu + 4 * sigma;
+            state.interestA = k;
+            state.interestB = null;
+          }
+        } else {
+          const p = parseProbability(sitProb.value);
+          if (p == null || p <= 0 || p >= 1) return;
+          // Right area p ⇒ left cdf = 1−p; left area p ⇒ cdf = p
+          const leftP = state.invDir === "left" ? p : 1 - p;
+          const k = invCdf(leftP, mu, sigma);
+          if (state.invDir === "left") {
+            setTailMode("left");
+            state.upper = k;
+            state.lower = mu - 4 * sigma;
+          } else {
+            setTailMode("right");
+            state.lower = k;
+            state.upper = mu + 4 * sigma;
+          }
+          state.interestA = k;
+          state.interestB = null;
+          cutoffResult.hidden = false;
+          cutoffValue.textContent = formatNum(k, 2);
+          cutoffExplain.textContent =
+            state.invDir === "right"
+              ? ` · so about ${(p * 100).toFixed(0)}% of the distribution lies at or above this value`
+              : ` · so about ${(p * 100).toFixed(0)}% of the distribution lies at or below this value`;
+        }
+
+        syncControlInputs();
+        syncHandlesToMode();
+        updateModelLine();
+        render();
+      }
+
+      function drawInterestMarkers(x, y, innerH) {
+        const values = [];
+        if (state.interestA != null) {
+          values.push({
+            v: state.interestA,
+            label: state.interestB != null ? "a" : "k",
+          });
+        }
+        if (state.interestB != null) values.push({ v: state.interestB, label: "b" });
+
+        const [xmin, xmax] = xDomain();
+        const visible = values.filter((d) => d.v >= xmin && d.v <= xmax);
+
+        const sel = interestLayer.selectAll("g.interest").data(visible, (d) => d.label);
+        sel.exit().remove();
+
+        const enter = sel.enter().append("g").attr("class", "interest");
+        enter.append("line").attr("class", "interest-marker");
+        enter.append("text").attr("class", "interest-label").attr("dy", "-0.4em");
+
+        enter
+          .merge(sel)
+          .attr("transform", (d) => `translate(${x(d.v)},0)`)
+          .each(function (d) {
+            const py = y(pdf(d.v, state.mu, state.sigma));
+            d3.select(this).select("line").attr("y1", Math.max(8, py - 6)).attr("y2", innerH);
+            d3.select(this)
+              .select("text")
+              .attr("y", Math.max(10, py - 8))
+              .text(`${d.label} = ${formatNum(d.v, 2)}`);
+          });
       }
 
       function chartSize() {
@@ -551,7 +1313,9 @@
         positionHandle(lowerHandle, state.lower, state.mode === "left");
         positionHandle(upperHandle, state.upper, state.mode === "right");
 
+        drawInterestMarkers(x, y, innerH);
         updateProbabilityUI();
+        updateModelLine();
       }
 
       function positionHandle(group, value, locked) {
@@ -605,6 +1369,24 @@
       // --- Controls ---
       const meanInput = document.getElementById("meanInput");
       const sdInput = document.getElementById("sdInput");
+      const sitMean = document.getElementById("sitMean");
+      const sitSd = document.getElementById("sitSd");
+      const sitK = document.getElementById("sitK");
+      const sitLow = document.getElementById("sitLow");
+      const sitHigh = document.getElementById("sitHigh");
+      const sitProb = document.getElementById("sitProb");
+      const varContext = document.getElementById("varContext");
+      const fitCurveBtn = document.getElementById("fitCurveBtn");
+      const panelProb = document.getElementById("panelProb");
+      const panelCutoff = document.getElementById("panelCutoff");
+      const fieldK = document.getElementById("fieldK");
+      const fieldA = document.getElementById("fieldA");
+      const fieldB = document.getElementById("fieldB");
+      const qtypeHelp = document.getElementById("qtypeHelp");
+      const invHint = document.getElementById("invHint");
+      const cutoffResult = document.getElementById("cutoffResult");
+      const cutoffValue = document.getElementById("cutoffValue");
+      const cutoffExplain = document.getElementById("cutoffExplain");
 
       meanInput.addEventListener("input", () => {
         const v = parseFloat(meanInput.value);
@@ -613,6 +1395,7 @@
         state.mu = v;
         state.lower += dx;
         state.upper += dx;
+        sitMean.value = String(v);
         syncHandlesToMode();
         render();
       });
@@ -622,15 +1405,70 @@
         if (!Number.isFinite(v) || v <= 0) return;
         v = Math.max(0.01, v);
         const oldSigma = state.sigma;
-        // Keep z-scores of bounds roughly stable when σ changes
         const zl = (state.lower - state.mu) / oldSigma;
         const zu = (state.upper - state.mu) / oldSigma;
         state.sigma = v;
         state.lower = state.mu + zl * v;
         state.upper = state.mu + zu * v;
+        sitSd.value = String(v);
         syncHandlesToMode();
         render();
       });
+
+      sitMean.addEventListener("input", () => {
+        const v = parseFloat(sitMean.value);
+        if (!Number.isFinite(v)) return;
+        const dx = v - state.mu;
+        state.mu = v;
+        state.lower += dx;
+        state.upper += dx;
+        meanInput.value = String(v);
+        syncHandlesToMode();
+        render();
+      });
+
+      sitSd.addEventListener("input", () => {
+        let v = parseFloat(sitSd.value);
+        if (!Number.isFinite(v) || v <= 0) return;
+        v = Math.max(0.01, v);
+        const oldSigma = state.sigma;
+        const zl = (state.lower - state.mu) / oldSigma;
+        const zu = (state.upper - state.mu) / oldSigma;
+        state.sigma = v;
+        state.lower = state.mu + zl * v;
+        state.upper = state.mu + zu * v;
+        sdInput.value = String(v);
+        syncHandlesToMode();
+        render();
+      });
+
+      varContext.addEventListener("input", () => {
+        state.context = varContext.value;
+        updateModelLine();
+      });
+
+      document.querySelectorAll(".qtype-tabs button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.qtype = btn.dataset.qtype;
+          updateQtypeUI();
+        });
+      });
+
+      document.querySelectorAll("#panelProb [data-cmp]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.cmp = btn.dataset.cmp;
+          updateQtypeUI();
+        });
+      });
+
+      document.querySelectorAll("#panelCutoff [data-inv]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.invDir = btn.dataset.inv;
+          updateQtypeUI();
+        });
+      });
+
+      fitCurveBtn.addEventListener("click", applySituationToCurve);
 
       document.querySelectorAll(".tails button").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -642,13 +1480,49 @@
         });
       });
 
+      document.querySelectorAll(".cas-tabs button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".cas-tabs button").forEach((b) => {
+            b.classList.remove("active");
+            b.setAttribute("aria-selected", "false");
+          });
+          btn.classList.add("active");
+          btn.setAttribute("aria-selected", "true");
+          state.cas = btn.dataset.cas;
+          updateCasUI();
+        });
+      });
+
+      const casCopyBtn = document.getElementById("casCopy");
+      casCopyBtn.addEventListener("click", async () => {
+        const text = document.getElementById("casCommand").textContent;
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+        }
+        casCopyBtn.classList.add("copied");
+        casCopyBtn.textContent = "Copied";
+        setTimeout(() => {
+          casCopyBtn.classList.remove("copied");
+          casCopyBtn.textContent = "Copy command";
+        }, 1200);
+      });
+
       // Responsive
       const ro = new ResizeObserver(() => render());
       ro.observe(document.querySelector(".chart-wrap"));
 
       // Initial
+      updateQtypeUI();
       syncHandlesToMode();
       render();
+      applySituationToCurve();
     })();
   </script>
 </body>
